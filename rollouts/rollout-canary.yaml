@@ -32,3 +32,56 @@ spec:
       - pause: {duration: 20s}
       - setWeight: 80
       - pause: {duration: 20s}
+
+      # canaryService and stableService are references to Services which the Rollout will modify
+      # to target the canary ReplicaSet and stable ReplicaSet respectively (required).
+      canaryService: canary-service
+      stableService: stable-service
+      trafficRouting:
+        alb:
+          # The referenced ingress will be injected with a custom action annotation, directing
+          # the AWS Load Balancer Controller to split traffic between the canary and stable
+          # Service, according to the desired traffic weight (required).
+          ingress: ingress
+          # Reference to a Service that the Ingress must target in one of the rules (optional).
+          # If omitted, uses canary.stableService.
+          #rootService: root-service
+          # Service port is the port which the Service listens on (required).
+          servicePort: 8000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/actions.root-service: |
+      {
+        "Type":"forward",
+        "ForwardConfig":{
+          "TargetGroups":[
+            {
+                "Weight":10,
+                "ServiceName":"canary-service",
+                "ServicePort":"80"
+            },
+            {
+                "Weight":90,
+                "ServiceName":"stable-service",
+                "ServicePort":"80"
+            }
+          ]
+        }
+      }
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /*
+        pathType: Exact
+        backend:
+          service:
+            name: root-service
+            port:
+              name: use-annotation
