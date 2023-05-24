@@ -1,0 +1,56 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: allianz-demo-blue
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: allianz-demo-blue
+  template:
+    metadata:
+      labels:
+        app: allianz-demo-blue
+    spec:
+      containers:
+      - name: allianz-demo
+        image: 623007965873.dkr.ecr.ap-southeast-1.amazonaws.com/allianz-demo:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+  strategy:
+    blueGreen:
+      activeService: active-service
+      previewService: preview-service
+      autoPromotionEnabled: false
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: active-service
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: allianz-demo-blue
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: preview-service
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: allianz-demo-blue
