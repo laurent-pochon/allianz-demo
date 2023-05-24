@@ -47,7 +47,7 @@ spec:
           # If omitted, uses canary.stableService.
           rootService: root-service
           # Service port is the port which the Service listens on (required).
-          servicePort: 8000
+          servicePort: 80
       steps:
       - setWeight: 5
       - pause: {}
@@ -58,10 +58,10 @@ kind: Service
 metadata:
   name: canary-service
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
   - port: 80
-    targetPort: http
+    targetPort: 8000
     protocol: TCP
     name: http
   selector:
@@ -75,10 +75,10 @@ kind: Service
 metadata:
   name: stable-service
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
   - port: 80
-    targetPort: http
+    targetPort: 8000
     protocol: TCP
     name: http
   selector:
@@ -92,10 +92,10 @@ kind: Service
 metadata:
   name: root-service
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
   - port: 80
-    targetPort: http
+    targetPort: 8000
     protocol: TCP
     name: http
   selector:
