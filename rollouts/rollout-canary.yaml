@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: allianz-demo-canary
+spec:
+  replicas: 5
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: allianz-demo-canary
+  template:
+    metadata:
+      labels:
+        app: allianz-demo-canary
+    spec:
+      containers:
+      - name: allianz-demo
+        image: 623007965873.dkr.ecr.ap-southeast-1.amazonaws.com/allianz-demo:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+  strategy:
+    canary:
+      steps:
+      - setWeight: 20
+      # The following pause step will pause the rollout indefinitely until manually resumed.
+      # Rollouts can be manually resumed by running `kubectl argo rollouts promote ROLLOUT`
+      - pause: {}
+      - setWeight: 40
+      - pause: {duration: 40s}
+      - setWeight: 60
+      - pause: {duration: 20s}
+      - setWeight: 80
+      - pause: {duration: 20s}
